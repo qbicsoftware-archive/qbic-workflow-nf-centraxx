@@ -52,7 +52,6 @@ if(params.help){
 params.folder = false
 params.output = "./results"
 params.prefix = "ann_"
-params.reference_genome = "."
 
 
 //Check NF version similar to NGI-RNAseq, thanks guys!
@@ -103,21 +102,46 @@ if(!outputFolder.exists()){
   outputFolder.mkdirs()
 }
 
-vcfFiles = Channel.fromPath(params.folder+"/*.vcf")
+readyVCF = Channel.fromPath(params.folder+"/*.vcf")
+packedVCF = Channel.fromPath(params.folder+"/*.vcf.gz")
 
-// Variant annotation with snpEff
+
+process unpackingVCF {
+  /*
+  Some unpacking before we can run the annotation
+  */
+  input:
+  file archive from packedVCF
+
+  output:
+  file '$trimmed_name' into readyVCF
+
+  script:
+  trimmed_name =  archive.toString() - '.gz'
+  """
+  gunzip -c ${archive} > $trimmed_name
+  """
+}
+
+
+
 process variantAnnotation {
+  /* 
+  Variant annotation with snpEff
+  VCF files need to be extracted.
+  */
 
   publishDir params.output, mode: 'copy'
 
   input:
-  file vcf from vcfFiles
+  file vcf from readyVCF
 
   output:
   file "ann_${vcf}"
 
+  script:
   """
-  snpEff hg19 ${vcf} > ann_${vcf}
+  snpEff -v hg19 ${vcf} > ann_${vcf}
   """
 
 }
