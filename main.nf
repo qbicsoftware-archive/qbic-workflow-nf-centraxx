@@ -102,48 +102,66 @@ if(!outputFolder.exists()){
   outputFolder.mkdirs()
 }
 
-// Read in all VCF files from folder
-readyVCF = Channel.fromPath(params.folder+"/*.vcf")
 // Read in all putative compressed VCF files
-packedVCF = Channel.fromPath(params.folder+"/*.vcf.gz")
-
+packedVCF = Channel.fromPath(params.folder+"/*.vcf*")
 
 process unpackingVCF {
   /*
   Some unpacking before we can run the annotation
   */
+  publishDir params.output, mode: 'copy'
+
   input:
   file archive from packedVCF
 
   output:
-  file '$trimmed_name' into readyVCF
+  file "$trimmed_name" into readyVCF
 
   script:
-  trimmed_name =  archive.toString() - '.gz'
-  """
-  gunzip -c ${archive} > $trimmed_name
-  """
+  trimmed_name = archive.toString() - '.gz'
+  
+  if(trimmed_name != archive.toString()){
+    """
+    gunzip -c ${archive} > $trimmed_name
+    """
+  } else {
+    """
+    """
+  }
 }
-
-
 
 process variantAnnotation {
   /* 
   Variant annotation with snpEff
   VCF files need to be extracted.
   */
-
   publishDir params.output, mode: 'copy'
 
   input:
   file vcf from readyVCF
 
   output:
-  file "ann_${vcf}"
+  file "ann_${vcf}" into annVCFs
 
   script:
   """
-  snpEff -v hg19 ${vcf} > ann_${vcf}
+  snpEff hg19 ${vcf} > ann_${vcf}
+  """
+}
+
+
+process extractVariantInfo {
+
+  input:
+  file vcf from annVCFs
+
+  script:
+  """
+  #!/usr/bin/env python
+  print ${vcf}
   """
 
+
 }
+
+
