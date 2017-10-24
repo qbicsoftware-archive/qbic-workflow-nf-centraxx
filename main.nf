@@ -102,7 +102,9 @@ if(!outputFolder.exists()){
   outputFolder.mkdirs()
 }
 
+// Read in all VCF files from folder
 readyVCF = Channel.fromPath(params.folder+"/*.vcf")
+// Read in all putative compressed VCF files
 packedVCF = Channel.fromPath(params.folder+"/*.vcf.gz")
 
 
