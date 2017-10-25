@@ -103,7 +103,10 @@ if(!outputFolder.exists()){
 }
 
 // Read in all putative compressed VCF files
-packedVCF = Channel.fromPath(params.folder+"/*.vcf*")
+//packedVCF = Channel.fromPath(params.folder+"/*.vcf*")
+// can be removed
+annVCF = Channel.fromPath(params.folder+"/ann_*.vcf")
+packedVCF = Channel.create()
 
 process unpackingVCF {
   /*
@@ -152,16 +155,37 @@ process variantAnnotation {
 
 process extractVariantInfo {
 
+  publishDir params.output, mode: 'copy'
+
   input:
-  file vcf from annVCFs
+  file vcf from annVCF
+
+  output:
+  file "${trimmed_name}_extracted_variants.txt" into extractedVariants
 
   script:
+  trimmed_name = vcf.toString() - '.vcf'
   """
-  #!/usr/bin/env python
-  print ${vcf}
+  extract_variants.py '${vcf}' > ${trimmed_name}_extracted_variants.txt
+  """
+}
+
+
+process createCentraxxXML {
+  
+  publishDir params.output, mode: 'copy'
+
+  input:
+  file variants from extractedVariants
+
+  script:
+  base_name = variants.toString() - '.txt'
+  qbic_id = (base_name =~ /Q[A-X0-9]{4}[0-9]{3}[A-X][A-X0-9]/)
+  found = qbic_id[0]
+  """
+  echo '${found}'_toCXX.xml
   """
 
 
 }
-
 
