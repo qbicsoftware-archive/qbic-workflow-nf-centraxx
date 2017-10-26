@@ -7,13 +7,16 @@ This graph gives a brief overview of the processes included in the workflow. It 
 ![https://github.com/qbicsoftware/qbic-workflow-nf-centraxx/blob/master/centraxx_wf.svg](https://github.com/qbicsoftware/qbic-workflow-nf-centraxx/blob/master/centraxx_wf.svg)
 
 ## Step 1: unpackingVCF
+_TODO: Add description here_
 
 ## Step 2: variantAnnotation
+_TODO: Add description here_
 
 ## Step 3: extractVariantInfo
+_TODO: Add description here_
 
 ## Step 4: createCentraxxXML
+_TODO: Add description here_
 
 ## Step 5: pushXMLtoCentraxX
-
-
+_TODO: Add description here_
