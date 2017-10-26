@@ -1,5 +1,5 @@
 # QBiC-workflow-nf-centraxx
-This workflow implemented in [Nextflow](https://www.nextflow.io) processes incomping gzipped variant calling format files and prepares it for the final upload in the patient information system CentraxX.
+This workflow implemented in [Nextflow](https://www.nextflow.io) processes incoming (gzipped) variant calling format files and prepares it for the final upload in the patient information system CentraxX.
 
 ## Workflow in a nutshell
 Input data are variant calling format ([VCF](https://samtools.github.io/hts-specs/)) files, that are automatically extracted from an archive, if necessary. The VCF files are then send to a process that performs variant annotation with [SnpEff](http://snpeff.sourceforge.net/SnpEff.html), that will lead to additional information about the variant. These annotated variants will then be used as basis for extraction to a more simpler variant overview format, reducing the information to gene name and its amino acid exchange (if mutation is not silent). Variants that have been called, but that are synonymous are recorded and tagged as `VARIANTABSENT`. 
