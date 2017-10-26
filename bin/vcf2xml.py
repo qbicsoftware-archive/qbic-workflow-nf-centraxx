@@ -1,11 +1,8 @@
 from __future__ import print_function
-import os
 import sys
-
-sys.path.append('/home-link/qeana10/openbis/servers/core-plugins/QBIC/1/dss/drop-boxes/register-iontorrent-data')
-
-
 import csv
+import re
+import uuid
 import datetime
 from dateutil import parser
 import pytz
@@ -16,19 +13,14 @@ from xml.dom.minidom import getDOMImplementation
 from pyxb.namespace import XMLSchema_instance as xsi
 from pyxb.namespace import XMLNamespaces as xmlns
 from pyxb import exceptions_
-
 from collections import defaultdict
-
-#import vcf
-import re
-import uuid
 
 # is tailored to the finalCxxPanel4000.tsv file
 def loadVariantsWhitelistFile(filename):
     tmpVariantPanel = {}
 
     with open(filename, 'rb') as panelfile:
-        panelreader = csv.reader(panelfile, delimiter=' ')
+        panelreader = csv.reader(panelfile, delimiter='\t')
         for variant in panelreader:
             genename = variant[0].strip()
             tmpVarField = variant[2].strip()
@@ -57,7 +49,8 @@ def loadGeneVariantsFromFile(filename):
                  'Ile': 'I', 'Leu': 'L', 'Lys': 'K',
                  'Met': 'M', 'Phe': 'F', 'Pro': 'P',
                  'Ser': 'S', 'Thr': 'T', 'Trp': 'W',
-                 'Tyr': 'Y', 'Val': 'V', '*': '*', '?': '?'}
+                 'Tyr': 'Y', 'Val': 'V', '*': '*', '?': '?',
+                 'fs': 'fs', 'del': 'del', 'Ter': 'Ter'}
 
     #geneVarMap = {}
     #tmpLoadedGeneVars = []
@@ -66,6 +59,8 @@ def loadGeneVariantsFromFile(filename):
     regex_splitAA = re.compile("([a-zA-Z\*\?]+)([0-9]+)([a-zA-Z\*\?]+)")
 
     for line in varFile:
+        if line.startswith("#"):
+            continue
         linesplit = line.split('\t')
 
         # extract annotated genename
@@ -81,6 +76,14 @@ def loadGeneVariantsFromFile(filename):
             tmpLoadedGeneVars[genename].append(mutation)
         else:
             mutation_str = mutation[2:].strip()
+            if "*" in mutation_str:
+                continue
+
+            if not re.match(regex_splitAA, mutation_str):
+                #print(mutation_str)
+                continue
+
+
             mutation_split = re.match(regex_splitAA, mutation_str).groups()
 
             # check if we have three substring, otherwise the regex split was
@@ -185,7 +188,6 @@ def matchVariantsToQBiCPanel(vcfData, panelData):
             filteredGeneVariants[gene] = ['VARIANTABSENT']
         elif panelData.has_key(gene):
             overlap = set(vcfData[gene]).intersection(panelData[gene])
-
             if len(overlap) > 0:
                 #print(gene, overlap)
                 filteredGeneVariants[gene] = list(overlap)
@@ -236,7 +238,7 @@ def matchVariantsToQBiCPanel(vcfData, panelData):
 #     return(docRootDOM.toprettyxml(encoding='utf-8'))
 
 
-def createPatientExport(vcfPanel, qPatientID, qSampleID, patientMPI, pgmSampleID, creationTimeStamp = '1970-01-01T11:59:59', panelName = 'Unknown gene panel'):
+def createPatientExport(vcfPanel, qSampleID, creationTimeStamp = '1970-01-01T11:59:59', panelName = 'Unknown gene panel'):
     pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(cx.Namespace, 'cxx')
 
     docRoot = cx.CentraXXDataExchange()
@@ -255,14 +257,14 @@ def createPatientExport(vcfPanel, qPatientID, qSampleID, patientMPI, pgmSampleID
     patientData = cx.PatientDataSetType()
     patientData.Source = 'XMLIMPORT'
 
-    patientIDcontainer = cx.IDContainerType()
-    patientFlexID = cx.FlexibleIDType('MPI', patientMPI)
-    patientIDcontainer.append(patientFlexID)
+    #patientIDcontainer = cx.IDContainerType()
+    #patientFlexID = cx.FlexibleIDType('MPI', patientMPI)
+    #patientIDcontainer.append(patientFlexID)
 
-    patientFlexID = cx.FlexibleIDType('QBIC_PAT_ID', qPatientID)
-    patientIDcontainer.append(patientFlexID)
+    #patientFlexID = cx.FlexibleIDType('QBIC_PAT_ID', qPatientID)
+    #patientIDcontainer.append(patientFlexID)
 
-    patientData.IDContainer = patientIDcontainer
+    #patientData.IDContainer = patientIDcontainer
 
     masterData = cx.PatientMasterdataType()
     patientData.Masterdata = masterData
@@ -275,8 +277,8 @@ def createPatientExport(vcfPanel, qPatientID, qSampleID, patientMPI, pgmSampleID
 
     sampleIDcontainer = cx.SampleIDContainerType()
 
-    sampleFlexID = cx.FlexibleIDType('SAMPLEID', pgmSampleID)
-    sampleIDcontainer.append(sampleFlexID)
+    #sampleFlexID = cx.FlexibleIDType('SAMPLEID', pgmSampleID)
+    #sampleIDcontainer.append(sampleFlexID)
 
     sampleFlexID = cx.FlexibleIDType('QBIC_SAMPLE_ID', qSampleID)
     sampleIDcontainer.append(sampleFlexID)

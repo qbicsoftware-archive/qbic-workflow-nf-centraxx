@@ -1,34 +1,35 @@
-import os,sys
-import codecs
-
-sys.path.append('/home-link/qeana10/openbis/servers/core-plugins/QBIC/1/dss/drop-boxes/register-iontorrent-data')
-
+#!/usr/bin/env python2
+import sys
 import vcf2xml
 
 
+def grep_time_stamp_and_panel(file_path):
+    meta_info = dict()
+    meta_info['time_stamp'] = '1970-01-01T11:59:59'
+    meta_info['panel'] = 'unknown gene panel'
+    with open(file_path, 'r') as fh:
+        for line in fh:
+            if line.startswith("#"):
+                parsed_line = line[1:].split("=")
+                if not parsed_line[1].rstrip():
+                    continue
+                meta_info[parsed_line[0]] = parsed_line[1].rstrip()
+    return meta_info
 
 variantsWhitelist = vcf2xml.loadVariantsWhitelistFile(sys.argv[2])
 vcfData = vcf2xml.loadGeneVariantsFromFile(sys.argv[1])
 
 filteredGeneList = vcf2xml.matchVariantsToQBiCPanel(vcfData, variantsWhitelist)
 
-# use qbic patient id (arg2), sample id (arg3), and target folder (arg4) here as parameters
-patientID = sys.argv[3]
-sampleID = sys.argv[4]
-patientMPI = sys.argv[5]
-pgmSampleID = sys.argv[6]
-creationTimeStamp = sys.argv[7]
-panelName = sys.argv[8]
+sampleID = sys.argv[3]
 
-xmlOutputString = vcf2xml.createPatientExport(filteredGeneList, patientID, sampleID, patientMPI, pgmSampleID, creationTimeStamp, panelName)
+meta_info = grep_time_stamp_and_panel(sys.argv[1])
 
-#cvXMLoutput = vcfxml.create
 
-#targetDir = sys.argv[8]
-#targetFilename = patientID + '-' + sampleID + '-Cxx-export.xml'
-targetFilename = sys.argv[9]
+xmlOutputString = vcf2xml.createPatientExport(filteredGeneList,
+                                              sampleID,
+                                              meta_info['time_stamp'],
+                                              meta_info['panel'])
 
 # TODO: check if we need utf8 encoding here
-#xmlOutputStringUnicode = unicode(xmlOutputString, 'utf8')
-with codecs.open(targetFilename, 'w', encoding='utf-8') as f:
-    f.write(xmlOutputString)
+print(u"{0}".format(xmlOutputString).encode('utf-8'))

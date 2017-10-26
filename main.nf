@@ -52,6 +52,7 @@ if(params.help){
 params.folder = false
 params.output = "./results"
 params.prefix = "ann_"
+params.whitelist = false
 
 
 //Check NF version similar to NGI-RNAseq, thanks guys!
@@ -86,6 +87,7 @@ log.info "========================================="
 def summary = [:]
 summary['Folder']     = params.folder
 summary['Output']     = params.output
+summary['Whitelist']  = params.whitelist
 
 
 if(params.email) summary['E-Mail address'] = params.email
@@ -97,16 +99,22 @@ if(!params.folder) {
   exit 1
 }
 
+if(!params.whitelist){
+  log.error "No variant whitelist provided. Please check the required input parameters"
+  exit 1
+}
+
 outputFolder = new File(params.output)
 if(!outputFolder.exists()){
   outputFolder.mkdirs()
 }
 
+
 // Read in all putative compressed VCF files
-//packedVCF = Channel.fromPath(params.folder+"/*.vcf*")
+packedVCF = Channel.fromPath(params.folder+"/*.vcf*")
 // can be removed
-annVCF = Channel.fromPath(params.folder+"/ann_*.vcf")
-packedVCF = Channel.create()
+//annVCF = Channel.fromPath(params.folder+"/ann_*.vcf")
+//packedVCF = Channel.create()
 
 process unpackingVCF {
   /*
@@ -158,7 +166,7 @@ process extractVariantInfo {
   publishDir params.output, mode: 'copy'
 
   input:
-  file vcf from annVCF
+  file vcf from annVCFs
 
   output:
   file "${trimmed_name}_extracted_variants.txt" into extractedVariants
@@ -178,14 +186,29 @@ process createCentraxxXML {
   input:
   file variants from extractedVariants
 
+  output:
+  file "${qbic_id}_toCentraXX.xml" into centraxXML
+
   script:
   base_name = variants.toString() - '.txt'
   qbic_id = (base_name =~ /Q[A-X0-9]{4}[0-9]{3}[A-X][A-X0-9]/)
   qbic_id = qbic_id[0]
   """
-  echo '${qbic_id}'_toCXX.xml
+  python2.7 /home/sven1103/git/qbic-workflow-nextflow-centraxx/bin/createCxxPatientExport.py ${variants} ${params.whitelist} ${qbic_id} > ${qbic_id}_toCentraXX.xml
   """
 
 
 }
 
+
+process pushXMLtoCentraxX {
+
+  input:
+    file variants from centraxXML
+
+  script:
+  """
+  echo 'Pushing XML to Centraxx...'
+  """
+
+}
