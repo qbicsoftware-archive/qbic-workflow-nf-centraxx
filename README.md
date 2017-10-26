@@ -3,6 +3,8 @@ This workflow implemented in [Nextflow](https://www.nextflow.io) processes incom
 
 ## Workflow graph
 This graph gives a brief overview of the processes included in the workflow. It was generated with the `-with-dag` flag when calling the workflow via Nextflow ([DAG visualisation](https://www.nextflow.io/docs/latest/tracing.html#dag-visualisation))
+
+
 ![https://github.com/qbicsoftware/qbic-workflow-nf-centraxx/blob/master/centraxx_wf.svg](https://github.com/qbicsoftware/qbic-workflow-nf-centraxx/blob/master/centraxx_wf.svg)
 
 
