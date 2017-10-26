@@ -28,15 +28,10 @@ def helpMessage() {
 
 	Mandatory parameters:
   		-folder <string>         Folder containing the input VCF files.
-  		-name <string>           Base file name, typically the processed sample ID (e.g. 'GS120001_01').
-
+      -whitelist <string>      File containing a TSV with whitelisted variants
+  		
 	Optional parameters:
-  		-out_folder <string>     Folder where analysis results should be stored. Default is same as in '-folder' (e.g. Sample_xyz/).
-                           Default is: 'default'.
-
-	Special parameters:
-  		--log <file>             Enables logging to the specified file.
-  		--email                  Sends you an e-mail on success/fail/etc (NOT YET IMPLEMENTED)
+      -output <string>         Folder where to write the output (Default is './results')
  """
 }
 
@@ -193,8 +188,9 @@ process createCentraxxXML {
   base_name = variants.toString() - '.txt'
   qbic_id = (base_name =~ /Q[A-X0-9]{4}[0-9]{3}[A-X][A-X0-9]/)
   qbic_id = qbic_id[0]
+  pwd = new File(".").getCanonicalPath()
   """
-  python2.7 /home/sven1103/git/qbic-workflow-nextflow-centraxx/bin/createCxxPatientExport.py ${variants} ${params.whitelist} ${qbic_id} > ${qbic_id}_toCentraXX.xml
+  python2.7 ${pwd}/bin/createCxxPatientExport.py ${variants} ${params.whitelist} ${qbic_id} > ${qbic_id}_toCentraXX.xml
   """
 
 
