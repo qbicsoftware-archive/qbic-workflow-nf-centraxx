@@ -1,4 +1,4 @@
-# QBiC-workflow-nf-centraxx
+# QBiC workflow nextflow CentraxX
 This workflow implemented in [Nextflow](https://www.nextflow.io) processes incoming (gzipped) variant calling format files and prepares it for the final upload in the patient information system CentraxX.
 
 ## Workflow in a nutshell
