@@ -22,6 +22,31 @@ class DummyVCFRecord:
             self.INFO['ANN'] = annStringSplit
 
 
+def grepTimeStampFromVCF(fileName):
+    timeString = ''
+
+    with open(fileName, 'r') as vcffile:
+
+        for line in vcffile:
+            if line.startswith('##fileUTCtime='):
+                timeString = line.strip().split('=')[1].strip('\"')
+                break
+
+    return timeString
+
+
+def grepPanelNameFromVCF(fileName):
+    panelName = ''
+
+    with open(fileName, 'r') as vcffile:
+        for line in vcffile:
+            if line.startswith('##parametersName='):
+                panelName = line.strip().split('=')[1].strip('\"')
+                break
+
+    return panelName
+
+
 def mangleSnpEffAnnotationString(annstring):
     """
     # Annotation      : T|missense_variant|MODERATE|CCT8L2|ENSG00000198445|transcript|ENST00000359963|protein_coding|1/1|c.1406G>A|p.Gly469Glu|1666/2034|1406/1674|469/557|  |
@@ -124,7 +149,6 @@ def extractVariants(vcfFilename):
             dnaChange = annDict['HGVS_c'].strip()
             aaChange = annDict['HGVS_p'].strip()
             combinedChange = '|'.join([genename, dnaChange, aaChange])
-            print(combinedChange)
 
             if dnaChange != '' and aaChange != '' and combinedChange not in blackList:
                 # print genename, dnaChange, aaChange
@@ -141,16 +165,21 @@ def main():
     annVCFPath = sys.argv[1]
     significantVariants = extractVariants(annVCFPath)
     analyzedGenes = extractVCFGenes(annVCFPath)
+    panel_name = grepPanelNameFromVCF(annVCFPath)
+    time_stamp = grepTimeStampFromVCF(annVCFPath)
+
+    print('#panel={0}'.format(panel_name))
+    print('#time_stamp={0}'.format(time_stamp))
 
     for variant in significantVariants:
-        print(variant[0] + '\t' + variant[2] + '\n')
+        print(variant[0] + '\t' + variant[2])
 
         if analyzedGenes.has_key(variant[0]):
             del analyzedGenes[variant[0]]
 
     # all remaining genes were analyzed but no variant was detected for them
     for gene in analyzedGenes.keys():
-        print(gene + '\tVARIANTABSENT\n')
+        print(gene + '\tVARIANTABSENT')
 
 
 if __name__ == '__main__':

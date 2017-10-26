@@ -181,9 +181,9 @@ process createCentraxxXML {
   script:
   base_name = variants.toString() - '.txt'
   qbic_id = (base_name =~ /Q[A-X0-9]{4}[0-9]{3}[A-X][A-X0-9]/)
-  found = qbic_id[0]
+  qbic_id = qbic_id[0]
   """
-  echo '${found}'_toCXX.xml
+  echo '${qbic_id}'_toCXX.xml
   """
 
 
